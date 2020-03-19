@@ -1,8 +1,9 @@
-const express = require('express');
+const express = require("express");
 const app = express();
 const PORT = 8080;
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
+const bcrypt = require("/bcrypt");
 app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(cookieParser());
@@ -23,7 +24,7 @@ const users = {
   }
 };
 
-function generateRandomString() {
+let generateRandomString = () => {
   let result = "";
   let char = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let charLength = char.length;
@@ -94,7 +95,7 @@ app.get("/login", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   let longURL = req.body.longURL;
-  urlDatabase[shortURL] = { longURL: longURL } ;
+  urlDatabase[shortURL] = { longURL: longURL };
   res.redirect(`/urls/${shortURL}`);
 });
 
@@ -112,14 +113,14 @@ app.post("/login", (req, res) => {
   let userLookup = emailLookup(req.body.email);
   users[id] = { id: id, email: req.body.email, password: req.body.password };
   if (userLookup) {
-    if (req.body.password === userLookup.password) {
+    if (bcrypt.compareSync(req.body.password, userLookup.password)) {
       res.cookie("user_id", users[id]);
       res.redirect("/urls");
-    } else if (req.body.password !== userLookup.password) {
-      res.status(403).send("<html><h1>403 Wrong password<html></h1>")
+    } else if (!bcrypt.compareSync(req.body.password, userLookup.password)) {
+      res.status(403).send("<html><h1>403 Wrong password<html></h1>");
     }
   } else {
-    res.status(403).send("<html><h1>403 E-mail not found<html></h1>")
+    res.status(403).send("<html><h1>403 E-mail not found<html></h1>");
   }
 });
 
@@ -132,13 +133,13 @@ app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
     res.status(400).send("<html><h1>Must input valid email and password!<html></h1>");
   } else if (emailLookup(req.body.email) === false) {
-    users[id] = { id: id, email: req.body.email, password: req.body.password };
+    users[id] = { id: id, email: req.body.email, password: bcrypt.hashSync(req.body.password, 10) };
     res.cookie("user_id", users[id]);
     res.redirect("/urls");
   } else if (emailLookup(req.body.email)) {
     res.status(400).send("<html><h1>Email already registered!<html></h1>");
   }
-})
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
