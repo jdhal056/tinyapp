@@ -7,8 +7,8 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.set("view engine", "ejs");
 app.use(cookieParser());
 const urlDatabase = {
-  "b2xVn2": { longURL: "http://www.lighthouselabs.ca" },
-  "9sm5xK": { longURL: "http://www.google.com" }
+  "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" },
+  "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" }
 };
 const users = { 
   "userRandomID": {
@@ -62,8 +62,12 @@ app.get("/urls", (req, res) => {
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = { urls: urlDatabase, userID: req.cookies["user_id"] };
-  res.render("urls_new", templateVars);
+  if (req.cookies.user_id === undefined) {
+    res.redirect("/login");
+  } else {
+    let templateVars = { urls: urlDatabase, userID: req.cookies["user_id"] };
+    res.render("urls_new", templateVars);
+  }
 });
 
 app.get("/urls/:shortURL", (req, res) => {
