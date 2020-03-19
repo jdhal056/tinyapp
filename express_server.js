@@ -37,10 +37,9 @@ let emailLookup = (email) => {
   for (let user in users) {
     if (email === users[user].email) {
       return users[user];
-    } else {
-      return false;
-    }
+    } 
   }
+  return false;
 };
 
 let id = generateRandomString();
@@ -79,11 +78,13 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  res.render("register");
+  let templateVars = { urls: urlDatabase, userID: req.cookies["user_id"] };
+  res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
-  res.render("login");
+  let templateVars = { urls: urlDatabase, userID: req.cookies["user_id"] };
+  res.render("login", templateVars);
 })
 
 app.post("/urls", (req, res) => {
@@ -104,8 +105,18 @@ app.post("/urls/:shortURL/edit", (req, res) => {
 });
 
 app.post("/login", (req, res) => {
-  res.cookie("user_id", users[id]);
-  res.redirect("/urls");
+  let userLookup = emailLookup(req.body.email);
+  users[id] = { id: id, email: req.body.email, password: req.body.password };
+  if (userLookup) {
+    if (req.body.password === userLookup.password) {
+      res.cookie("user_id", users[id]);
+      res.redirect("/urls");
+    } else if (req.body.password !== userLookup.password) {
+      res.status(403).send("<html><h1>403 Wrong password<html></h1>")
+    }
+  } else {
+    res.status(403).send("<html><h1>403 E-mail not found<html></h1>")
+  }
 });
 
 app.post("/logout", (req, res) => {
@@ -115,13 +126,13 @@ app.post("/logout", (req, res) => {
 
 app.post("/register", (req, res) => {
   if (req.body.email === "" || req.body.password === "") {
-    res.status(400);
-  } else if (!emailLookup(req.body.email)) {
+    res.status(400).send("<html><h1>Must input valid email and password!<html></h1>");
+  } else if (emailLookup(req.body.email) === false) {
     users[id] = { id: id, email: req.body.email, password: req.body.password };
     res.cookie("user_id", users[id]);
     res.redirect("/urls");
-  } else {
-    res.status(400);
+  } else if (emailLookup(req.body.email)) {
+    res.status(400).send("<html><h1>Email already registered!<html></h1>");
   }
 })
 
