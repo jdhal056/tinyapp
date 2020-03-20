@@ -13,6 +13,9 @@ app.use(cookieSession({
   keys: ["secretKeys"]
 }));
 
+
+// CONSTANTS
+
 const urlDatabase = {
   "b2xVn2": { longURL: "http://www.lighthouselabs.ca", userID: "aJ48lW" },
   "9sm5xK": { longURL: "http://www.google.com", userID: "aJ48lW" }
@@ -30,6 +33,9 @@ const users = {
     password: "dishwasher-funk"
   }
 };
+
+
+// GET REQUESTS
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
@@ -81,7 +87,10 @@ app.get("/register", (req, res) => {
 app.get("/login", (req, res) => {
   let templateVars = { urls: urlDatabase, user: getUserByID(req.session.user_id, users) };
   res.render("login", templateVars);
-})
+});
+
+
+// POST REQUESTS
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
